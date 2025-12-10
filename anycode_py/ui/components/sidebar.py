@@ -13,13 +13,14 @@ class Sidebar:
     def __init__(self, controller: ChatController, model: ChatModel) -> None:
         self.controller = controller
         self.model = model
-
-    def build(self) -> ft.Container:
-        conversation_list = ft.Column(
-            [self._conversation_item(conv) for conv in self.model.conversations],
+        self.conversation_list = ft.Column(
             spacing=2,
             scroll=ft.ScrollMode.AUTO,
+            on_scroll=self._on_conversation_scroll,
         )
+
+    def build(self) -> ft.Container:
+        self._refresh_conversation_list()
 
         return ft.Container(
             content=ft.Column(
@@ -32,7 +33,7 @@ class Sidebar:
                     self._projects_list(),
                     ft.Divider(height=1, color=theming.BORDER_COLOR),
                     ft.Container(
-                        content=conversation_list,
+                        content=self.conversation_list,
                         expand=True,
                         padding=ft.padding.symmetric(horizontal=4),
                     ),
@@ -45,6 +46,11 @@ class Sidebar:
             bgcolor=theming.SIDEBAR_BG,
             border=ft.border.only(right=ft.BorderSide(1, theming.BORDER_COLOR)),
         )
+
+    def refresh(self) -> None:
+        """Rebuild conversation items and refresh the list control."""
+        self._refresh_conversation_list()
+        self.conversation_list.update()
 
     # --- Sections ------------------------------------------------------- #
     def _top_icons(self) -> ft.Container:
@@ -94,7 +100,7 @@ class Sidebar:
         )
 
     def _projects_list(self) -> ft.Container:
-        projects = ["y", "ZemengFeng", "lumina", "See more"]
+        projects = ["dummy", "dummy", "dummy", "See more"]
         icons = [ft.Icons.FOLDER_OUTLINED, ft.Icons.FOLDER_OUTLINED, ft.Icons.FOLDER_OUTLINED, ft.Icons.MORE_HORIZ]
         return ft.Container(
             content=ft.Column(
@@ -188,7 +194,13 @@ class Sidebar:
             )
 
         def click_handler(e):
-            self.controller.select_conversation(conversation.title)
+            # while set the other not
+            for conv in self.model.conversations:
+                conv.selected = False
+                conv.indicator = False
+            conversation.indicator = True
+            conversation.selected = True
+            self.controller.select_conversation(conversation.id or conversation.title)
 
         return ft.Container(
             content=ft.Row(row_content, spacing=8),
@@ -210,3 +222,14 @@ class Sidebar:
             if not conversation.selected
             else None,
         )
+
+    def _refresh_conversation_list(self) -> None:
+        self.conversation_list.controls = [self._conversation_item(conv) for conv in self.model.conversations]
+
+    def _on_conversation_scroll(self, e: ft.OnScrollEvent) -> None:
+        """Load more conversations when near the bottom."""
+        # Some platforms may not provide scroll metrics; guard for safety.
+        if getattr(e, "pixels", None) is None or getattr(e, "max_scroll_extent", None) is None:
+            return
+        if e.pixels >= e.max_scroll_extent - 50:
+            self.controller.load_more_conversations()

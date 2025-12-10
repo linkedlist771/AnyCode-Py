@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import time
+import asyncio
 
 import flet as ft
 import pyperclip
@@ -18,12 +18,12 @@ class CodeBlock:
         self.language = language
 
     def build(self) -> ft.Container:
-        def copy_code(e):
+        async def copy_code(e):
             try:
                 pyperclip.copy(self.code_text)
                 e.control.content.controls[1].value = "Copied!"
                 e.control.update()
-                time.sleep(1)
+                await asyncio.sleep(1)
                 e.control.content.controls[1].value = "Copy"
                 e.control.update()
             except Exception:
@@ -94,12 +94,12 @@ class UserMessageBubble:
         edit_mode = ft.Ref[ft.Container]()
         view_mode = ft.Ref[ft.Container]()
 
-        def copy_message(e):
+        async def copy_message(e):
             try:
                 pyperclip.copy(self.message.content)
                 e.control.icon = ft.Icons.CHECK
                 self.controller.update_page()
-                time.sleep(1)
+                await asyncio.sleep(1)
                 e.control.icon = ft.Icons.CONTENT_COPY_OUTLINED
                 self.controller.update_page()
             except Exception:
@@ -224,6 +224,17 @@ class AssistantMessageBlock:
         thought_expanded = ft.Ref[ft.Column]()
         thought_icon = ft.Ref[ft.Icon]()
 
+        async def copy_message(e):
+            try:
+                pyperclip.copy(self.message.content)
+                e.control.icon = ft.Icons.CHECK
+                self.controller.update_page()
+                await asyncio.sleep(1)
+                e.control.icon = ft.Icons.CONTENT_COPY_OUTLINED
+                self.controller.update_page()
+            except Exception:
+                pass
+
         def toggle_thought(e):
             if thought_expanded.current.visible:
                 thought_expanded.current.visible = False
@@ -265,90 +276,90 @@ class AssistantMessageBlock:
                 spacing=2,
             ),
             ft.Container(height=16),
-            ft.Text(
-                self.message.content.split("\n")[0],
-                size=15,
-                color=theming.TEXT_PRIMARY,
-                weight=ft.FontWeight.W_600,
+            ft.Markdown(
+                value=self.message.content,
                 selectable=True,
+                code_theme="atom-one-dark",
+                on_tap_link=lambda e: self.controller.show_snackbar(f"Open link: {e.data}"),
+                extension_set=ft.MarkdownExtensionSet.GITHUB_WEB,
             ),
-            ft.Container(height=16),
-            ft.Text(
-                "1. Text 到底能不能交互 / 复制?",
-                size=16,
-                color=theming.TEXT_PRIMARY,
-                weight=ft.FontWeight.W_600,
-                selectable=True,
-            ),
-            ft.Container(height=12),
-            ft.Text(
-                "默认行为",
-                size=14,
-                color=theming.TEXT_PRIMARY,
-                weight=ft.FontWeight.W_600,
-                selectable=True,
-            ),
-            ft.Container(height=8),
-            ft.Row(
-                [
-                    ft.Text("•", size=14, color=theming.TEXT_PRIMARY),
-                    ft.Container(width=8),
-                    ft.Column(
-                        [
-                            ft.Text(
-                                "Flet 里的大部分控件默认都是不可选中的，包括 Text。",
-                                size=14,
-                                color=theming.TEXT_PRIMARY,
-                                selectable=True,
-                            ),
-                            ft.Row(
-                                [
-                                    ft.Text(
-                                        '所以你现在看到 "文字不能选、不能复制"，大概率是因为用的是默认配置。',
-                                        size=14,
-                                        color=theming.TEXT_PRIMARY,
-                                        selectable=True,
-                                    ),
-                                    ft.Container(
-                                        content=ft.Text("flet.dev +1", size=11, color=theming.TEXT_SECONDARY),
-                                        bgcolor="#f0f0f0",
-                                        border_radius=4,
-                                        padding=ft.padding.symmetric(horizontal=6, vertical=2),
-                                    ),
-                                ],
-                                spacing=8,
-                                wrap=True,
-                            ),
-                        ],
-                        spacing=4,
-                        expand=True,
-                    ),
-                ],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.START,
-            ),
-            ft.Container(height=16),
-            ft.Text(
-                "让 Text 可选 & 可复制",
-                size=14,
-                color=theming.TEXT_PRIMARY,
-                weight=ft.FontWeight.W_600,
-                selectable=True,
-            ),
-            ft.Container(height=8),
-            ft.Row(
-                [
-                    ft.Text("1.", size=14, color=theming.TEXT_PRIMARY),
-                    ft.Container(width=8),
-                    ft.Text(
-                        "直接把 Text 变成可选：",
-                        size=14,
-                        color=theming.TEXT_PRIMARY,
-                        selectable=True,
-                    ),
-                ]
-            ),
-            ft.Container(height=12),
+            # ft.Container(height=16),
+            # ft.Text(
+            #     "1. Text 到底能不能交互 / 复制?",
+            #     size=16,
+            #     color=theming.TEXT_PRIMARY,
+            #     weight=ft.FontWeight.W_600,
+            #     selectable=True,
+            # ),
+            # ft.Container(height=12),
+            # ft.Text(
+            #     "默认行为",
+            #     size=14,
+            #     color=theming.TEXT_PRIMARY,
+            #     weight=ft.FontWeight.W_600,
+            #     selectable=True,
+            # ),
+            # ft.Container(height=8),
+            # ft.Row(
+            #     [
+            #         ft.Text("•", size=14, color=theming.TEXT_PRIMARY),
+            #         ft.Container(width=8),
+            #         ft.Column(
+            #             [
+            #                 ft.Text(
+            #                     "Flet 里的大部分控件默认都是不可选中的，包括 Text。",
+            #                     size=14,
+            #                     color=theming.TEXT_PRIMARY,
+            #                     selectable=True,
+            #                 ),
+            #                 ft.Row(
+            #                     [
+            #                         ft.Text(
+            #                             '所以你现在看到 "文字不能选、不能复制"，大概率是因为用的是默认配置。',
+            #                             size=14,
+            #                             color=theming.TEXT_PRIMARY,
+            #                             selectable=True,
+            #                         ),
+            #                         ft.Container(
+            #                             content=ft.Text("flet.dev +1", size=11, color=theming.TEXT_SECONDARY),
+            #                             bgcolor="#f0f0f0",
+            #                             border_radius=4,
+            #                             padding=ft.padding.symmetric(horizontal=6, vertical=2),
+            #                         ),
+            #                     ],
+            #                     spacing=8,
+            #                     wrap=True,
+            #                 ),
+            #             ],
+            #             spacing=4,
+            #             expand=True,
+            #         ),
+            #     ],
+            #     alignment=ft.MainAxisAlignment.START,
+            #     vertical_alignment=ft.CrossAxisAlignment.START,
+            # ),
+            # ft.Container(height=16),
+            # ft.Text(
+            #     "让 Text 可选 & 可复制",
+            #     size=14,
+            #     color=theming.TEXT_PRIMARY,
+            #     weight=ft.FontWeight.W_600,
+            #     selectable=True,
+            # ),
+            # ft.Container(height=8),
+            # ft.Row(
+            #     [
+            #         ft.Text("1.", size=14, color=theming.TEXT_PRIMARY),
+            #         ft.Container(width=8),
+            #         ft.Text(
+            #             "直接把 Text 变成可选：",
+            #             size=14,
+            #             color=theming.TEXT_PRIMARY,
+            #             selectable=True,
+            #         ),
+            #     ]
+            # ),
+            # ft.Container(height=12),
         ]
 
         if self.message.code:
@@ -358,18 +369,26 @@ class AssistantMessageBlock:
         controls.append(
             ft.Row(
                 [
-                    ft.Container(expand=True),
-                    ft.Container(
-                        content=ft.Icon(ft.Icons.KEYBOARD_ARROW_DOWN, size=20, color=theming.TEXT_SECONDARY),
-                        width=32,
-                        height=32,
-                        bgcolor=theming.MAIN_BG,
-                        border_radius=16,
-                        border=ft.border.all(1, theming.BORDER_COLOR),
-                        alignment=ft.alignment.center,
+                    ft.IconButton(
+                        ft.Icons.CONTENT_COPY_OUTLINED,
+                        icon_size=16,
+                        icon_color=theming.TEXT_SECONDARY,
+                        tooltip="Copy message",
+                        on_click=copy_message,
                     ),
-                    ft.Container(expand=True),
-                ]
+                    # ft.Container(width=8),
+                    # ft.Container(
+                    #     content=ft.Icon(ft.Icons.KEYBOARD_ARROW_DOWN, size=20, color=theming.TEXT_SECONDARY),
+                    #     width=32,
+                    #     height=32,
+                    #     bgcolor=theming.MAIN_BG,
+                    #     border_radius=16,
+                    #     border=ft.border.all(1, theming.BORDER_COLOR),
+                    #     alignment=ft.alignment.center,
+                    # ),
+                    # ft.Container(expand=True),
+                ],
+                alignment=ft.MainAxisAlignment.START,
             )
         )
 

@@ -70,5 +70,8 @@ class ChatView:
         if update:
             self.controller.update_page()
 
+    def refresh_sidebar(self) -> None:
+        self.sidebar.refresh()
+
     def update_model_label(self, model_name: str) -> None:
         self.header.update_label(model_name)

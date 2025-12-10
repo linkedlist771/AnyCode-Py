@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from anycode_py.process_manager.codex import CodexProcessManager
+from anycode_py.session_manager.codex.manager import CodexSessionManager
+
 
 @dataclass
 class Message:
@@ -20,6 +23,7 @@ class Conversation:
     """Represents a chat conversation shown in the sidebar."""
 
     title: str
+    id: Optional[str] = None
     selected: bool = False
     indicator: bool = False
     messages: List[Message] = field(default_factory=list)
@@ -29,6 +33,8 @@ class ChatModel:
     """In-memory chat state used by the MVC controller."""
 
     def __init__(self) -> None:
+        self.conversation_manager = CodexSessionManager()
+
         self.available_models: List[str] = [
             "ChatGPT 5.1",
             "ChatGPT 4o",
@@ -38,22 +44,19 @@ class ChatModel:
         ]
         self.selected_model: str = self.available_models[0]
         self.conversations: List[Conversation] = self._build_conversations()
-        self._seed_default_messages()
+        self.loaded_count: int = len(self.conversations)
+        self.total_sessions: int = self.conversation_manager.get_total_sessions()
+        self.loading_more: bool = False
+        # self._seed_default_messages()
 
-    def _build_conversations(self) -> List[Conversation]:
+    def _build_conversations(self, limit: int = 20) -> List[Conversation]:
+        _conversations = self.conversation_manager.get_session_list(start=0, end=limit)
         conversations = [
-            Conversation("TextButton 和滚动问题", selected=True),
-            Conversation("TextButton 用法说明", indicator=True),
-            Conversation("代码实现请求"),
-            Conversation("UI模型对比"),
-            Conversation("2K 分辨率解释"),
-            Conversation("罚球排名统计"),
-            Conversation("iPhone 中毒风险分析"),
-            Conversation("小说生成创新方向"),
-            Conversation("小说沙盒创新方向"),
-            Conversation("4090bf16 tflops 算力"),
-            Conversation("情绪的神经科学解释"),
+            Conversation(title=conversation["title"], id=conversation["session_id"]) for conversation in _conversations
         ]
+        if conversations:
+            conversations[0].selected = True
+            conversations[0].indicator = True
         return conversations
 
     def _seed_default_messages(self) -> None:
@@ -104,9 +107,39 @@ class ChatModel:
         if model_name in self.available_models:
             self.selected_model = model_name
 
-    def select_conversation(self, title: str) -> None:
+    def select_conversation(self, session_id: str) -> None:
         for conversation in self.conversations:
-            conversation.selected = conversation.title == title
+            conversation.selected = conversation.id == session_id
+            if not conversation.selected:
+                continue
+            history = self.conversation_manager.load_chat_history(session_id)
+            messages: List[Message] = []
+            if history:
+                for item in history:
+                    messages.append(Message(role=item.get("role", ""), content=item.get("content", "")))
+            conversation.messages = messages
+
+    def load_more_conversations(self, batch_size: int = 20) -> bool:
+        """Fetch the next batch of conversations; returns True if any were added."""
+        if self.loading_more:
+            return False
+        if self.loaded_count >= self.total_sessions:
+            return False
+
+        self.loading_more = True
+        start = self.loaded_count
+        end = start + batch_size
+        new_items = self.conversation_manager.get_session_list(start=start, end=end)
+        if not new_items:
+            self.loading_more = False
+            return False
+
+        for item in new_items:
+            self.conversations.append(Conversation(title=item["title"], id=item["session_id"]))
+
+        self.loaded_count += len(new_items)
+        self.loading_more = False
+        return True
 
     def add_message(
         self,

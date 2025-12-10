@@ -17,9 +17,10 @@ class InputBar:
         def on_send_click(e):
             if self.input_field_ref.current and self.input_field_ref.current.value:
                 text = self.input_field_ref.current.value
-                self.controller.send_message(text)
                 self.input_field_ref.current.value = ""
                 self.controller.update_page()
+                # Run async chat send without blocking UI thread.
+                self.controller.page.run_task(self.controller.send_message, text)
 
         def on_attach_click(e):
             self.controller.show_snackbar("Attachment feature - select files", bgcolor=theming.ACCENT_BLUE)

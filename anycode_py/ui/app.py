@@ -8,7 +8,7 @@ from anycode_py.ui.models.chat import ChatModel
 from anycode_py.ui.views.main_view import ChatView
 
 
-def main(page: ft.Page) -> None:
+async def main(page: ft.Page) -> None:
     """Entry point for the Chat UI using MVC."""
     page.title = "AnyCode-Py"
     page.bgcolor = theming.MAIN_BG

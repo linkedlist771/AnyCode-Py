@@ -50,8 +50,11 @@ class HeaderBar:
         )
 
         def toggle_dropdown(e):
-            dropdown_container.visible = not dropdown_container.visible
-            self.controller.update_page()
+            dropdown = self.dropdown_ref.current
+            if not dropdown:
+                return
+            dropdown.visible = not dropdown.visible
+            dropdown.update()
 
         model_selector = ft.Stack(
             [
@@ -72,7 +75,8 @@ class HeaderBar:
                     on_click=toggle_dropdown,
                 ),
                 ft.Container(content=dropdown_container, top=35, left=0),
-            ]
+            ],
+            clip_behavior=ft.ClipBehavior.NONE,
         )
 
         return ft.Container(
@@ -91,8 +95,10 @@ class HeaderBar:
     def _select_model(self, model_name: str):
         def handler(e):
             self.controller.select_model(model_name)
-            if self.dropdown_ref.current:
-                self.dropdown_ref.current.visible = False
+            dropdown = self.dropdown_ref.current
+            if dropdown:
+                dropdown.visible = False
+                dropdown.update()
             self.update_label(model_name)
             self.controller.update_page()
 
