@@ -13,7 +13,7 @@ class BaseProcessManager:
         self.env = {**os.environ, **(env or {})}
         self.proc: asyncio.subprocess.Process | None = None
         self.cwd = cwd
-        
+
     @classmethod
     async def create(cls, cmd, *, env=None, cwd: Path | None = None) -> "BaseProcessManager":
         self = cls(cmd, env=env, cwd=cwd)
@@ -41,7 +41,7 @@ class BaseProcessManager:
 
     async def read_stream(self) -> AsyncGenerator[Any, None]:
         if self.proc is None or self.proc.stdout is None:
-            raise RuntimeError("Process not initialized")        
+            raise RuntimeError("Process not initialized")
         async for line in self.proc.stdout:
             line_str = line.decode().strip()
             if not line_str:
@@ -57,7 +57,7 @@ class BaseProcessManager:
 
     async def close(self, timeout: float = 5.0):
         if self.proc is None:
-            return        
+            return
         if self.proc.stdin is not None and not self.proc.stdin.is_closing():
             self.proc.stdin.close()
             try:

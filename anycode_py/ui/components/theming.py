@@ -1,0 +1,12 @@
+"""Shared styling constants for the Flet UI."""
+
+SIDEBAR_BG = "#f9f9f9"
+SIDEBAR_HOVER_BG = "#ececec"
+SELECTED_BG = "#e8e8e8"
+MAIN_BG = "#ffffff"
+BORDER_COLOR = "#e5e5e5"
+TEXT_PRIMARY = "#1a1a1a"
+TEXT_SECONDARY = "#6b6b6b"
+ACCENT_BLUE = "#0066ff"
+CODE_BG = "#f6f6f6"
+USER_BUBBLE_BG = "#f0f0f0"
